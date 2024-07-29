@@ -1,0 +1,69 @@
+# Define the networks used by services
+networks:
+  metabrute_net:
+    # Define custom network options if needed
+    driver: bridge
+
+# Define the services
+services:
+
+  # Backend service
+  backend:
+    # Build context for the Dockerfile
+    build:
+      context: ./backend
+    # Mount volumes for backend work directory
+    volumes:
+      - ./backend/work_backend:/work_directory
+    # Attach to the metabrute_net network
+    networks:
+      - metabrute_net
+
+  # Web server service
+  webserver:
+    # Build context for the Dockerfile
+    build:
+      context: ./web
+    # Expose ports for HTTP and HTTPS
+    ports:
+      - "80:80"
+      - "443:443"
+    # Dependencies on MySQL database service
+    depends_on:
+      - db
+    # Mount volumes for web content
+    volumes:
+      - ./web/www:/var/www/html
+    # Attach to the metabrute_net network
+    networks:
+      - metabrute_net
+
+  # MySQL database service
+  db:
+    # Build context for the Dockerfile
+    build:
+      context: ./db
+    # Mount volumes for database persistence
+    volumes:
+      - ./metabrute_db:/var/lib/mysql
+    # Attach to the metabrute_net network
+    networks:
+      - metabrute_net
+
+  # phpMyAdmin service
+  phpmyadmin:
+    # Build context for the Dockerfile
+    build:
+      context: ./phpmyadmin
+    # Link to MySQL database service
+    links:
+      - db
+    # Dependencies on MySQL database service
+    depends_on:
+      - db
+    # Expose port for phpMyAdmin UI
+    ports:
+      - "8080:80"
+    # Attach to the metabrute_net network
+    networks:
+      - metabrute_net
